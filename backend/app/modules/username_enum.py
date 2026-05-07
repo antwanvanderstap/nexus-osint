@@ -58,7 +58,7 @@ class UsernameEnumModule(BaseModule):
                 return Entity(
                     id=uid,
                     type=EntityType.USERNAME,
-                    label=f"{username} @ {platform}",
+                    label=platform,
                     properties={"platform": platform, "url": url.format(username), "username": username},
                     source_module=self.metadata.name,
                     source_url=url.format(username),

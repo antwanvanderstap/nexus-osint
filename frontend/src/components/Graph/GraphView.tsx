@@ -49,34 +49,40 @@ export function GraphView({ entities, relationships, onNodeClick }: Props) {
     <CytoscapeComponent
       elements={elements}
       style={{ width: "100%", height: "100%" }}
-      layout={{ name: "fcose" } as cytoscape.LayoutOptions}
+      layout={{
+        name: "fcose",
+        nodeRepulsion: 6000,
+        idealEdgeLength: 120,
+        animate: true,
+      } as cytoscape.LayoutOptions}
       stylesheet={[
         {
           selector: "node",
           style: {
             "background-color": "data(color)",
             label: "data(label)",
-            color: "#fff",
-            "font-size": 7,
+            color: "#ddd",
+            "font-size": 9,
+            "font-weight": "normal",
             "text-valign": "bottom",
             "text-halign": "center",
-            "text-margin-y": 3,
-            width: 28,
-            height: 28,
+            "text-margin-y": 5,
+            "text-background-color": "#111",
+            "text-background-opacity": 0.7,
+            "text-background-padding": "2px",
+            width: 20,
+            height: 20,
           },
         },
         {
           selector: "edge",
           style: {
-            width: 1.5,
-            "line-color": "#555",
-            "target-arrow-color": "#555",
+            width: 1,
+            "line-color": "#444",
+            "target-arrow-color": "#444",
             "target-arrow-shape": "triangle",
             "curve-style": "bezier",
-            label: "data(label)",
-            "font-size": 6,
-            color: "#aaa",
-            "text-rotation": "autorotate",
+            label: "",
           },
         },
         {
