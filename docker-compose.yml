@@ -5,7 +5,7 @@ services:
       - "8000:8000"
     env_file: .env
     volumes:
-      - audit_data:/data/audit
+      - app_data:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -22,4 +22,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  audit_data:
+  app_data:

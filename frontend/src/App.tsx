@@ -48,6 +48,7 @@ function LegalDisclaimer({ onAccept }: { onAccept: () => void }) {
 export default function App() {
   const [accepted, setAccepted] = useState(() => sessionStorage.getItem("disclaimer") === "1");
   const [modules, setModules] = useState<ModuleMetadata[]>([]);
+  const [cases, setCases] = useState<Case[]>([]);
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +56,15 @@ export default function App() {
   const [newCaseName, setNewCaseName] = useState("");
   const [newCasePurpose, setNewCasePurpose] = useState<UseCase>("research");
 
+  const loadCases = async () => {
+    const r = await axios.get<Case[]>(`${API}/cases/`);
+    setCases(r.data);
+    return r.data;
+  };
+
   useEffect(() => {
     axios.get<ModuleMetadata[]>(`${API}/modules/`).then((r) => setModules(r.data));
+    loadCases();
   }, []);
 
   const handleAccept = () => {
@@ -73,6 +81,13 @@ export default function App() {
     setCurrentCase(r.data);
     setShowNewCase(false);
     setNewCaseName("");
+    await loadCases();
+  };
+
+  const deleteCase = async (caseId: string) => {
+    await axios.delete(`${API}/cases/${caseId}`);
+    if (currentCase?.id === caseId) setCurrentCase(null);
+    await loadCases();
   };
 
   const runModule = async (moduleName: string, entityType: EntityType, entityLabel: string) => {
@@ -89,6 +104,7 @@ export default function App() {
       });
       const updated = await axios.get<Case>(`${API}/cases/${currentCase.id}`);
       setCurrentCase(updated.data);
+      await loadCases();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Execution failed";
       setError(msg);
@@ -165,6 +181,36 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className="w-72 border-r border-gray-800 bg-gray-900 flex flex-col overflow-hidden">
+
+          {/* Saved Cases */}
+          <div className="px-3 py-2 border-b border-gray-800 text-xs text-gray-400 uppercase tracking-wide flex items-center justify-between">
+            <span>Investigations</span>
+            <span className="text-gray-600">{cases.length}</span>
+          </div>
+          <div className="flex flex-col overflow-y-auto max-h-48 border-b border-gray-800">
+            {cases.length === 0 && (
+              <p className="text-xs text-gray-600 italic p-3">No saved investigations.</p>
+            )}
+            {cases.map((c) => (
+              <div
+                key={c.id}
+                className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-800 transition-colors ${currentCase?.id === c.id ? "bg-gray-800 border-l-2 border-blue-500" : ""}`}
+                onClick={() => setCurrentCase(c)}
+              >
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs text-white truncate">{c.name}</span>
+                  <span className="text-[10px] text-gray-500">{c.declared_purpose} · {c.entities.length} entities</span>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteCase(c.id); }}
+                  className="text-gray-600 hover:text-red-400 text-xs ml-2 flex-shrink-0 transition-colors"
+                  title="Delete"
+                >✕</button>
+              </div>
+            ))}
+          </div>
+
+          {/* Modules */}
           <div className="px-3 py-2 border-b border-gray-800 text-xs text-gray-400 uppercase tracking-wide">
             Modules
           </div>
@@ -178,7 +224,7 @@ export default function App() {
           ) : (
             <div className="flex-1 flex items-center justify-center p-4">
               <p className="text-xs text-gray-500 text-center">
-                Create a case to start an investigation.
+                Select or create an investigation to run modules.
               </p>
             </div>
           )}

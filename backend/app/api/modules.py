@@ -1,9 +1,11 @@
 import uuid
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlmodel import Session
 
 from app.core.audit_logger import log_execution
 from app.core.plugin_bus import plugin_bus
+from app.database import get_session
 from app.models.case import get_case, upsert_graph
 from app.modules.base import Entity, EntityType, ModuleMetadata, UseCase
 
@@ -36,8 +38,8 @@ class ExecuteResponse(BaseModel):
 
 
 @router.post("/execute", response_model=ExecuteResponse)
-async def execute_module(req: ExecuteRequest) -> ExecuteResponse:
-    case = get_case(req.case_id)
+async def execute_module(req: ExecuteRequest, session: Session = Depends(get_session)) -> ExecuteResponse:
+    case = get_case(req.case_id, session)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -45,7 +47,7 @@ async def execute_module(req: ExecuteRequest) -> ExecuteResponse:
     if not module:
         raise HTTPException(status_code=404, detail=f"Module '{req.module_name}' not found")
 
-    if not module.is_permitted_for(case.declared_purpose):
+    if not module.is_permitted_for(UseCase(case.declared_purpose)):
         raise HTTPException(
             status_code=403,
             detail=f"Module '{req.module_name}' is not permitted for purpose '{case.declared_purpose}'",
@@ -85,6 +87,7 @@ async def execute_module(req: ExecuteRequest) -> ExecuteResponse:
         req.case_id,
         [e.model_dump() for e in all_entities],
         [r.model_dump() for r in result.relationships],
+        session,
     )
 
     return ExecuteResponse(

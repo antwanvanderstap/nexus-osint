@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.cases import router as cases_router
 from app.api.modules import router as modules_router
+from app.database import create_db
+
+create_db()
 
 app = FastAPI(
     title="Nexus OSINT",
