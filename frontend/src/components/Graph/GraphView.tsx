@@ -84,8 +84,8 @@ export function GraphView({ entities, relationships, onNodeClick }: Props) {
           style: { "border-width": 3, "border-color": "#fff" },
         },
       ]}
-      cy={(cy) => {
-        cy.on("tap", "node", (e) => {
+      cy={(cy: cytoscape.Core) => {
+        cy.on("tap", "node", (e: cytoscape.EventObject) => {
           const entity = e.target.data("entity") as Entity;
           if (entity && onNodeClick) onNodeClick(entity);
         });
