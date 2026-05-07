@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Case, EntityType, ModuleMetadata, UseCase } from "./types";
+import { Case, Entity, EntityType, ModuleMetadata, UseCase } from "./types";
 import { GraphView } from "./components/Graph/GraphView";
 import { ModulePanel } from "./components/ModulePanel/ModulePanel";
+import { EntityList } from "./components/EntityList/EntityList";
 
 const API = "http://localhost:8000/api";
 
@@ -50,6 +51,7 @@ export default function App() {
   const [modules, setModules] = useState<ModuleMetadata[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNewCase, setShowNewCase] = useState(false);
@@ -230,24 +232,33 @@ export default function App() {
           )}
         </aside>
 
-        {/* Graph */}
-        <main className="flex-1 relative bg-gray-950">
-          {error && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-red-900 border border-red-700 text-red-200 text-xs px-4 py-2 rounded">
-              {error}
-            </div>
-          )}
-          {currentCase && (currentCase.entities.length > 0) ? (
-            <GraphView
-              entities={currentCase.entities as never}
-              relationships={currentCase.relationships as never}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-600 text-sm">
-              {currentCase ? "Run a module to populate the graph." : "No active case."}
-            </div>
-          )}
-        </main>
+        {/* Graph + Entity List */}
+        <div className="flex flex-1 overflow-hidden">
+          <main className="flex-1 relative bg-gray-950">
+            {error && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-red-900 border border-red-700 text-red-200 text-xs px-4 py-2 rounded">
+                {error}
+              </div>
+            )}
+            {currentCase && currentCase.entities.length > 0 ? (
+              <GraphView
+                entities={currentCase.entities as never}
+                relationships={currentCase.relationships as never}
+                onNodeClick={(entity) => setSelectedEntity(entity as Entity)}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-600 text-sm">
+                {currentCase ? "Run a module to populate the graph." : "No active case."}
+              </div>
+            )}
+          </main>
+
+          <EntityList
+            entities={(currentCase?.entities ?? []) as Entity[]}
+            selectedEntity={selectedEntity}
+            onSelect={setSelectedEntity}
+          />
+        </div>
       </div>
     </div>
   );
